@@ -1,6 +1,5 @@
 
 diff --git a/fs/Makefile b/fs/Makefile
-index e4adb988218c..2461d8986ee5 100644
 --- a/fs/Makefile
 +++ b/fs/Makefile
 @@ -18,6 +18,8 @@ obj-y :=	open.o read_write.o file_table.o super.o \
@@ -13,7 +12,6 @@ index e4adb988218c..2461d8986ee5 100644
  obj-y +=	buffer.o direct-io.o mpage.o
  else
 diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
-index 4f25015aa534..099ab024d66a 100644
 --- a/fs/devpts/inode.c
 +++ b/fs/devpts/inode.c
 @@ -24,6 +24,9 @@
@@ -56,7 +54,6 @@ index 4f25015aa534..099ab024d66a 100644
  		return NULL;
  	return dentry->d_fsdata;
 diff --git a/fs/exec.c b/fs/exec.c
-index b1b9db56a609..9bd59acadb99 100644
 --- a/fs/exec.c
 +++ b/fs/exec.c
 @@ -67,6 +67,10 @@
@@ -104,7 +101,6 @@ index b1b9db56a609..9bd59acadb99 100644
  	 * We move the actual failure in case of RLIMIT_NPROC excess from
  	 * set*uid() to execve() because too many poorly written programs
 diff --git a/fs/namei.c b/fs/namei.c
-index ce97b60fe557..418f4a9080a7 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -39,10 +39,22 @@
@@ -515,7 +511,6 @@ index ce97b60fe557..418f4a9080a7 100644
  	return filp;
  }
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 18d2d37f1e2f..ebc8413606eb 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -32,10 +32,36 @@
@@ -913,7 +908,6 @@ index 18d2d37f1e2f..ebc8413606eb 100644
 +}
 +#endif
 diff --git a/fs/notify/fdinfo.c b/fs/notify/fdinfo.c
-index 3451708fd035..0e4bffd80a43 100644
 --- a/fs/notify/fdinfo.c
 +++ b/fs/notify/fdinfo.c
 @@ -12,6 +12,9 @@
@@ -1012,7 +1006,6 @@ index 3451708fd035..0e4bffd80a43 100644
  			   inode_mark->wd, inode->i_ino, inode->i_sb->s_dev,
  			   inotify_mark_user_mask(mark));
 diff --git a/fs/open.c b/fs/open.c
-index 39779f1ba4e1..4cc7c6a9de58 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -33,6 +33,9 @@
@@ -1059,7 +1052,6 @@ index 39779f1ba4e1..4cc7c6a9de58 100644
  		return -EINVAL;
  
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 7624ae2c115c..040cec65c1cb 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
 @@ -100,6 +100,9 @@
@@ -1120,7 +1112,6 @@ index 7624ae2c115c..040cec65c1cb 100644
  			continue;
  
 diff --git a/fs/proc/bootconfig.c b/fs/proc/bootconfig.c
-index 2e244ada1f97..792e1cb04b11 100644
 --- a/fs/proc/bootconfig.c
 +++ b/fs/proc/bootconfig.c
 @@ -12,8 +12,19 @@
@@ -1144,7 +1135,6 @@ index 2e244ada1f97..792e1cb04b11 100644
  		seq_puts(m, saved_boot_config);
  	return 0;
 diff --git a/fs/proc/fd.c b/fs/proc/fd.c
-index 913bef0d2a36..df7eecf70a01 100644
 --- a/fs/proc/fd.c
 +++ b/fs/proc/fd.c
 @@ -13,6 +13,9 @@
@@ -1218,7 +1208,6 @@ index 913bef0d2a36..df7eecf70a01 100644
  	/* show_fd_locks() never deferences files so a stale value is safe */
  	show_fd_locks(m, file, files);
 diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index d56513a56bae..0049787b7ff2 100644
 --- a/fs/proc/task_mmu.c
 +++ b/fs/proc/task_mmu.c
 @@ -21,6 +21,9 @@
@@ -1352,7 +1341,6 @@ index d56513a56bae..0049787b7ff2 100644
  
  		len = min(count, PM_ENTRY_BYTES * pm.pos);
 diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
-index 49650e54d2f8..6957a21713e2 100644
 --- a/fs/proc_namespace.c
 +++ b/fs/proc_namespace.c
 @@ -12,12 +12,19 @@
@@ -1414,7 +1402,6 @@ index 49650e54d2f8..6957a21713e2 100644
  	if (sb->s_op->show_devname) {
  		seq_puts(m, "device ");
 diff --git a/fs/readdir.c b/fs/readdir.c
-index 09e8ed7d4161..fe6c96984ae4 100644
 --- a/fs/readdir.c
 +++ b/fs/readdir.c
 @@ -24,6 +24,14 @@
@@ -1867,7 +1854,6 @@ index 09e8ed7d4161..fe6c96984ae4 100644
  	if (error >= 0)
  		error = buf.error;
 diff --git a/fs/stat.c b/fs/stat.c
-index 357a1db410ec..6f0fad6c13cc 100644
 --- a/fs/stat.c
 +++ b/fs/stat.c
 @@ -17,6 +17,9 @@
@@ -1943,7 +1929,6 @@ index 357a1db410ec..6f0fad6c13cc 100644
  		      AT_STATX_SYNC_TYPE))
  		return -EINVAL;
 diff --git a/fs/statfs.c b/fs/statfs.c
-index 2a37f9f3dba1..e56f577710cc 100644
 --- a/fs/statfs.c
 +++ b/fs/statfs.c
 @@ -9,6 +9,10 @@
@@ -1994,7 +1979,6 @@ index 2a37f9f3dba1..e56f577710cc 100644
  	drop_super(s);
  	return err;
 diff --git a/include/linux/mount.h b/include/linux/mount.h
-index 9fc79930799e..0da7c62eb846 100644
 --- a/include/linux/mount.h
 +++ b/include/linux/mount.h
 @@ -78,7 +78,11 @@ struct vfsmount {
@@ -2010,7 +1994,6 @@ index 9fc79930799e..0da7c62eb846 100644
  
  static inline struct user_namespace *mnt_user_ns(const struct vfsmount *mnt)
 diff --git a/kernel/kallsyms.c b/kernel/kallsyms.c
-index e0d9f77cf2d4..d5e222555a60 100644
 --- a/kernel/kallsyms.c
 +++ b/kernel/kallsyms.c
 @@ -738,6 +738,10 @@ static void s_stop(struct seq_file *m, void *p)
@@ -2062,7 +2045,6 @@ index e0d9f77cf2d4..d5e222555a60 100644
  }
  
 diff --git a/kernel/sys.c b/kernel/sys.c
-index 0e76093073c7..e239a4f83e6e 100644
 --- a/kernel/sys.c
 +++ b/kernel/sys.c
 @@ -1291,12 +1291,18 @@ static int override_release(char __user *release, size_t len)
@@ -2085,7 +2067,6 @@ index 0e76093073c7..e239a4f83e6e 100644
  	if (copy_to_user(name, &tmp, sizeof(tmp)))
  		return -EFAULT;
 diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index 2ee2c8a315e7..c18a607232ae 100644
 --- a/security/selinux/avc.c
 +++ b/security/selinux/avc.c
 @@ -47,6 +47,12 @@

@@ -1,5 +1,4 @@
 diff --git a/kernel/Kconfig b/kernel/Kconfig
-index 67f177f4..e4365900 100644
 --- a/kernel/Kconfig
 +++ b/kernel/Kconfig
 @@ -16,4 +16,139 @@ config KSU_DEBUG
@@ -143,7 +142,6 @@ index 67f177f4..e4365900 100644
 +
  endmenu
 diff --git a/kernel/Makefile b/kernel/Makefile
-index 9fec3ef3..8a190993 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
 @@ -51,4 +51,81 @@ ccflags-y += -DEXPECTED_HASH=\"$(KSU_EXPECTED_HASH)\"
@@ -229,7 +227,6 @@ index 9fec3ef3..8a190993 100644
 +endif
  # Keep a new line here!! Because someone may append config
 diff --git a/kernel/allowlist.c b/kernel/allowlist.c
-index 97455675..01020863 100644
 --- a/kernel/allowlist.c
 +++ b/kernel/allowlist.c
 @@ -93,7 +93,7 @@ static uint8_t allow_list_bitmap[PAGE_SIZE] __read_mostly __aligned(PAGE_SIZE);
@@ -269,7 +266,6 @@ index 97455675..01020863 100644
  	return ksu_queue_work(&ksu_save_work);
  }
 diff --git a/kernel/apk_sign.c b/kernel/apk_sign.c
-index ba8b73f2..6ae5e3b9 100644
 --- a/kernel/apk_sign.c
 +++ b/kernel/apk_sign.c
 @@ -316,5 +316,10 @@ module_param_cb(ksu_debug_manager_uid, &expected_size_ops,
@@ -285,7 +281,6 @@ index ba8b73f2..6ae5e3b9 100644
  }
 \ No newline at end of file
 diff --git a/kernel/core_hook.c b/kernel/core_hook.c
-index 760f3041..52d89536 100644
 --- a/kernel/core_hook.c
 +++ b/kernel/core_hook.c
 @@ -33,6 +33,10 @@
@@ -928,7 +923,6 @@ index 760f3041..52d89536 100644
  	return 0;
  }
 diff --git a/kernel/kernel_compat.c b/kernel/kernel_compat.c
-index d4ee546d..a11f2628 100644
 --- a/kernel/kernel_compat.c
 +++ b/kernel/kernel_compat.c
 @@ -48,6 +48,16 @@ void ksu_android_ns_fs_check()
@@ -949,7 +943,6 @@ index d4ee546d..a11f2628 100644
  {
  	// switch mnt_ns even if current is not wq_worker, to ensure what we open is the correct file in android mnt_ns, rather than user created mnt_ns
 diff --git a/kernel/kernel_compat.h b/kernel/kernel_compat.h
-index 4bcfbf38..5d5fcf35 100644
 --- a/kernel/kernel_compat.h
 +++ b/kernel/kernel_compat.h
 @@ -25,6 +25,7 @@ extern long ksu_strncpy_from_user_nofault(char *dst,
@@ -961,7 +954,6 @@ index 4bcfbf38..5d5fcf35 100644
  					 umode_t mode);
  extern ssize_t ksu_kernel_read_compat(struct file *p, void *buf, size_t count,
 diff --git a/kernel/ksu.c b/kernel/ksu.c
-index d517c3b5..621a1d2e 100644
 --- a/kernel/ksu.c
 +++ b/kernel/ksu.c
 @@ -11,6 +11,10 @@
@@ -987,7 +979,6 @@ index d517c3b5..621a1d2e 100644
  
  	ksu_workqueue = alloc_ordered_workqueue("kernelsu_work_queue", 0);
 diff --git a/kernel/ksud.c b/kernel/ksud.c
-index 98fee107..c888951a 100644
 --- a/kernel/ksud.c
 +++ b/kernel/ksud.c
 @@ -57,6 +57,10 @@ bool ksu_execveat_hook __read_mostly = true;
@@ -1013,7 +1004,6 @@ index 98fee107..c888951a 100644
  
  static void stop_input_hook()
 diff --git a/kernel/selinux/rules.c b/kernel/selinux/rules.c
-index ddfe3dd2..e28cc336 100644
 --- a/kernel/selinux/rules.c
 +++ b/kernel/selinux/rules.c
 @@ -127,6 +127,15 @@ void apply_kernelsu_rules()
@@ -1033,7 +1023,6 @@ index ddfe3dd2..e28cc336 100644
  }
  
 diff --git a/kernel/selinux/selinux.c b/kernel/selinux/selinux.c
-index 17a25dae..fd4d9ee4 100644
 --- a/kernel/selinux/selinux.c
 +++ b/kernel/selinux/selinux.c
 @@ -5,6 +5,16 @@
@@ -1143,7 +1132,6 @@ index 17a25dae..fd4d9ee4 100644
  
  u32 ksu_get_devpts_sid()
 diff --git a/kernel/selinux/selinux.h b/kernel/selinux/selinux.h
-index 88f1e7d3..22d4b324 100644
 --- a/kernel/selinux/selinux.h
 +++ b/kernel/selinux/selinux.h
 @@ -16,6 +16,18 @@ bool is_zygote(void *cred);
@@ -1166,7 +1154,6 @@ index 88f1e7d3..22d4b324 100644
  
  #endif
 diff --git a/kernel/sucompat.c b/kernel/sucompat.c
-index ae57becc..8ab08a3f 100644
 --- a/kernel/sucompat.c
 +++ b/kernel/sucompat.c
 @@ -9,6 +9,9 @@
