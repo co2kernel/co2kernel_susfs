@@ -17,8 +17,6 @@
 #include <linux/susfs.h>
 #include "mount.h"
 
-static spinlock_t susfs_spin_lock;
-
 extern bool susfs_is_current_ksu_domain(void);
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 extern void try_umount(const char *mnt, bool check_mnt, int flags, uid_t uid);
@@ -44,6 +42,7 @@ bool susfs_starts_with(const char *str, const char *prefix) {
 
 /* sus_path */
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
+static DEFINE_SPINLOCK(susfs_spin_lock_sus_path);
 static LIST_HEAD(LH_SUS_PATH_LOOP);
 static LIST_HEAD(LH_SUS_PATH_ANDROID_DATA);
 static LIST_HEAD(LH_SUS_PATH_SDCARD);
@@ -169,7 +168,7 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 		}
 		list_for_each_entry_safe(cursor, temp, &LH_SUS_PATH_ANDROID_DATA, list) {
 			if (unlikely(!strcmp(cursor->info.target_pathname, path.dentry->d_name.name))) {
-				spin_lock(&susfs_spin_lock);
+				spin_lock(&susfs_spin_lock_sus_path);
 				cursor->info.target_ino = info.target_ino;
 				strncpy(cursor->info.target_pathname, path.dentry->d_name.name, SUSFS_MAX_LEN_PATHNAME - 1);
 				strncpy(cursor->target_pathname, resolved_pathname, SUSFS_MAX_LEN_PATHNAME - 1);
@@ -177,7 +176,7 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 				cursor->path_len = strlen(cursor->info.target_pathname);
 				SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully updated to LH_SUS_PATH_ANDROID_DATA\n",
 							cursor->info.target_ino, cursor->target_pathname, cursor->info.i_uid);
-				spin_unlock(&susfs_spin_lock);
+				spin_unlock(&susfs_spin_lock_sus_path);
 				goto out_kfree_tmp_buf;
 			}
 		}
@@ -192,11 +191,11 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 		new_list->info.i_uid = info.i_uid;
 		new_list->path_len = strlen(new_list->info.target_pathname);
 		INIT_LIST_HEAD(&new_list->list);
-		spin_lock(&susfs_spin_lock);
+		spin_lock(&susfs_spin_lock_sus_path);
 		list_add_tail(&new_list->list, &LH_SUS_PATH_ANDROID_DATA);
 		SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully added to LH_SUS_PATH_ANDROID_DATA\n",
 					new_list->info.target_ino, new_list->target_pathname, new_list->info.i_uid);
-		spin_unlock(&susfs_spin_lock);
+		spin_unlock(&susfs_spin_lock_sus_path);
 		goto out_kfree_tmp_buf;
 	} else if (strstr(resolved_pathname, sdcard_path.pathname)) {
 		if (!sdcard_path.is_inited) {
@@ -206,7 +205,7 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 		}
 		list_for_each_entry_safe(cursor, temp, &LH_SUS_PATH_SDCARD, list) {
 			if (unlikely(!strcmp(cursor->info.target_pathname, path.dentry->d_name.name))) {
-				spin_lock(&susfs_spin_lock);
+				spin_lock(&susfs_spin_lock_sus_path);
 				cursor->info.target_ino = info.target_ino;
 				strncpy(cursor->info.target_pathname, path.dentry->d_name.name, SUSFS_MAX_LEN_PATHNAME - 1);
 				strncpy(cursor->target_pathname, resolved_pathname, SUSFS_MAX_LEN_PATHNAME - 1);
@@ -214,7 +213,7 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 				cursor->path_len = strlen(cursor->info.target_pathname);
 				SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully updated to LH_SUS_PATH_SDCARD\n",
 							cursor->info.target_ino, cursor->target_pathname, cursor->info.i_uid);
-				spin_unlock(&susfs_spin_lock);
+				spin_unlock(&susfs_spin_lock_sus_path);
 				goto out_kfree_tmp_buf;
 			}
 		}
@@ -229,11 +228,11 @@ int susfs_add_sus_path(struct st_susfs_sus_path* __user user_info) {
 		new_list->info.i_uid = info.i_uid;
 		new_list->path_len = strlen(new_list->info.target_pathname);
 		INIT_LIST_HEAD(&new_list->list);
-		spin_lock(&susfs_spin_lock);
+		spin_lock(&susfs_spin_lock_sus_path);
 		list_add_tail(&new_list->list, &LH_SUS_PATH_SDCARD);
 		SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully added to LH_SUS_PATH_SDCARD\n",
 					new_list->info.target_ino, new_list->target_pathname, new_list->info.i_uid);
-		spin_unlock(&susfs_spin_lock);
+		spin_unlock(&susfs_spin_lock_sus_path);
 		goto out_kfree_tmp_buf;
 	}
 
@@ -296,7 +295,7 @@ int susfs_add_sus_path_loop(struct st_susfs_sus_path* __user user_info) {
 
 	list_for_each_entry_safe(cursor, temp, &LH_SUS_PATH_LOOP, list) {
 		if (unlikely(!strcmp(cursor->info.target_pathname, resolved_pathname))) {
-			spin_lock(&susfs_spin_lock);
+			spin_lock(&susfs_spin_lock_sus_path);
 			cursor->info.target_ino = info.target_ino;
 			strncpy(cursor->info.target_pathname, resolved_pathname, SUSFS_MAX_LEN_PATHNAME - 1);
 			strncpy(cursor->target_pathname, resolved_pathname, SUSFS_MAX_LEN_PATHNAME - 1);
@@ -304,7 +303,7 @@ int susfs_add_sus_path_loop(struct st_susfs_sus_path* __user user_info) {
 			cursor->path_len = strlen(cursor->info.target_pathname);
 			SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully updated to LH_SUS_PATH_LOOP\n",
 						cursor->info.target_ino, cursor->target_pathname, cursor->info.i_uid);
-			spin_unlock(&susfs_spin_lock);
+			spin_unlock(&susfs_spin_lock_sus_path);
 			goto out_set_sus_path;
 		}
 	}
@@ -319,11 +318,11 @@ int susfs_add_sus_path_loop(struct st_susfs_sus_path* __user user_info) {
 	new_list->info.i_uid = info.i_uid;
 	new_list->path_len = strlen(new_list->info.target_pathname);
 	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_sus_path);
 	list_add_tail(&new_list->list, &LH_SUS_PATH_LOOP);
 	SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', i_uid: '%u', is successfully added to LH_SUS_PATH_LOOP\n",
 				new_list->info.target_ino, new_list->target_pathname, new_list->info.i_uid);
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_sus_path);
 out_set_sus_path:
 	spin_lock(&inode->i_lock);
 	set_bit(AS_FLAGS_SUS_PATH, &inode->i_mapping->flags);
@@ -451,6 +450,7 @@ bool susfs_is_inode_sus_path(struct inode *inode) {
 
 /* sus_mount */
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+static DEFINE_SPINLOCK(susfs_spin_lock_sus_mount);
 static LIST_HEAD(LH_SUS_MOUNT);
 static void susfs_update_sus_mount_inode(char *target_pathname) {
 	struct mount *mnt = NULL;
@@ -513,12 +513,12 @@ int susfs_add_sus_mount(struct st_susfs_sus_mount* __user user_info) {
 
 	list_for_each_entry_safe(cursor, temp, &LH_SUS_MOUNT, list) {
 		if (unlikely(!strcmp(cursor->info.target_pathname, info.target_pathname))) {
-			spin_lock(&susfs_spin_lock);
+			spin_lock(&susfs_spin_lock_sus_mount);
 			memcpy(&cursor->info, &info, sizeof(info));
 			susfs_update_sus_mount_inode(cursor->info.target_pathname);
 			SUSFS_LOGI("target_pathname: '%s', target_dev: '%lu', is successfully updated to LH_SUS_MOUNT\n",
 						cursor->info.target_pathname, cursor->info.target_dev);
-			spin_unlock(&susfs_spin_lock);
+			spin_unlock(&susfs_spin_lock_sus_mount);
 			return 0;
 		}
 	}
@@ -533,11 +533,11 @@ int susfs_add_sus_mount(struct st_susfs_sus_mount* __user user_info) {
 	susfs_update_sus_mount_inode(new_list->info.target_pathname);
 
 	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_sus_mount);
 	list_add_tail(&new_list->list, &LH_SUS_MOUNT);
 	SUSFS_LOGI("target_pathname: '%s', target_dev: '%lu', is successfully added to LH_SUS_MOUNT\n",
 				new_list->info.target_pathname, new_list->info.target_dev);
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_sus_mount);
 	return 0;
 }
 
@@ -613,6 +613,7 @@ out_free_pathname:
 
 /* sus_kstat */
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
+static DEFINE_SPINLOCK(susfs_spin_lock_sus_kstat);
 static DEFINE_HASHTABLE(SUS_KSTAT_HLIST, 10);
 static int susfs_update_sus_kstat_inode(char *target_pathname) {
 	struct path p;
@@ -658,7 +659,7 @@ int susfs_add_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 		return 1;
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_sus_kstat);
 	hash_for_each_safe(SUS_KSTAT_HLIST, bkt, tmp_node, tmp_entry, node) {
 		if (!strcmp(tmp_entry->info.target_pathname, info.target_pathname)) {
 			hash_del(&tmp_entry->node);
@@ -667,7 +668,7 @@ int susfs_add_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 			break;
 		}
 	}
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_sus_kstat);
 
 	new_entry = kmalloc(sizeof(struct st_susfs_sus_kstat_hlist), GFP_KERNEL);
 	if (!new_entry) {
@@ -693,7 +694,7 @@ int susfs_add_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 		return 1;
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_sus_kstat);
 	hash_add(SUS_KSTAT_HLIST, &new_entry->node, info.target_ino);
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0)
 	if (update_hlist) {
@@ -732,7 +733,7 @@ int susfs_add_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 				new_entry->info.spoofed_blksize, new_entry->info.spoofed_blocks);
 	}
 #endif
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_sus_kstat);
 	return 0;
 }
 
@@ -748,7 +749,7 @@ int susfs_update_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 		return 1;
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_sus_kstat);
 	hash_for_each_safe(SUS_KSTAT_HLIST, bkt, tmp_node, tmp_entry, node) {
 		if (!strcmp(tmp_entry->info.target_pathname, info.target_pathname)) {
 			if (susfs_update_sus_kstat_inode(tmp_entry->info.target_pathname)) {
@@ -783,7 +784,7 @@ int susfs_update_sus_kstat(struct st_susfs_sus_kstat* __user user_info) {
 		}
 	}
 out_spin_unlock:
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_sus_kstat);
 	return err;
 }
 
@@ -824,6 +825,7 @@ void susfs_sus_ino_for_show_map_vma(unsigned long ino, dev_t *out_dev, unsigned 
 
 /* try_umount */
 #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
+static DEFINE_SPINLOCK(susfs_spin_lock_try_umount);
 static LIST_HEAD(LH_TRY_UMOUNT_PATH);
 int susfs_add_try_umount(struct st_susfs_try_umount* __user user_info) {
 	struct st_susfs_try_umount_list *cursor = NULL, *temp = NULL;
@@ -851,9 +853,9 @@ int susfs_add_try_umount(struct st_susfs_try_umount* __user user_info) {
 	memcpy(&new_list->info, &info, sizeof(info));
 
 	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_try_umount);
 	list_add_tail(&new_list->list, &LH_TRY_UMOUNT_PATH);
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_try_umount);
 	SUSFS_LOGI("target_pathname: '%s', mnt_mode: %d, is successfully added to LH_TRY_UMOUNT_PATH\n", new_list->info.target_pathname, new_list->info.mnt_mode);
 	return 0;
 }
@@ -925,9 +927,9 @@ add_to_new_list:
 	new_list->info.mnt_mode = TRY_UMOUNT_DETACH;
 
 	INIT_LIST_HEAD(&new_list->list);
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_try_umount);
 	list_add_tail(&new_list->list, &LH_TRY_UMOUNT_PATH);
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_try_umount);
 	SUSFS_LOGI("target_pathname: '%s', ino: %lu, mnt_mode: %d, is successfully added to LH_TRY_UMOUNT_PATH\n",
 					new_list->info.target_pathname, path->dentry->d_inode->i_ino, new_list->info.mnt_mode);
 out_free_pathname:
@@ -979,10 +981,12 @@ void susfs_spoof_uname(struct new_utsname* tmp) {
 
 /* set_log */
 #ifdef CONFIG_KSU_SUSFS_ENABLE_LOG
+static DEFINE_SPINLOCK(susfs_spin_lock_enable_log);
+
 void susfs_set_log(bool enabled) {
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_enable_log);
 	susfs_is_log_enabled = enabled;
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_enable_log);
 	if (susfs_is_log_enabled) {
 		pr_info("susfs: enable logging to kernel");
 	} else {
@@ -993,6 +997,7 @@ void susfs_set_log(bool enabled) {
 
 /* spoof_cmdline_or_bootconfig */
 #ifdef CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG
+static DEFINE_SPINLOCK(susfs_spin_lock_set_cmdline_or_bootconfig);
 static char *fake_cmdline_or_bootconfig = NULL;
 int susfs_set_cmdline_or_bootconfig(char* __user user_fake_cmdline_or_bootconfig) {
 	int res;
@@ -1006,10 +1011,10 @@ int susfs_set_cmdline_or_bootconfig(char* __user user_fake_cmdline_or_bootconfig
 		}
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_set_cmdline_or_bootconfig);
 	memset(fake_cmdline_or_bootconfig, 0, SUSFS_FAKE_CMDLINE_OR_BOOTCONFIG_SIZE);
 	res = strncpy_from_user(fake_cmdline_or_bootconfig, user_fake_cmdline_or_bootconfig, SUSFS_FAKE_CMDLINE_OR_BOOTCONFIG_SIZE-1);
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_set_cmdline_or_bootconfig);
 
 	if (res > 0) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6,1,0)
@@ -1034,6 +1039,7 @@ int susfs_spoof_cmdline_or_bootconfig(struct seq_file *m) {
 
 /* open_redirect */
 #ifdef CONFIG_KSU_SUSFS_OPEN_REDIRECT
+static DEFINE_SPINLOCK(susfs_spin_lock_open_redirect);
 static DEFINE_HASHTABLE(OPEN_REDIRECT_HLIST, 10);
 static int susfs_update_open_redirect_inode(struct st_susfs_open_redirect_hlist *new_entry) {
 	struct path path_target;
@@ -1074,7 +1080,7 @@ int susfs_add_open_redirect(struct st_susfs_open_redirect* __user user_info) {
 		return 1;
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_open_redirect);
 	hash_for_each_safe(OPEN_REDIRECT_HLIST, bkt, tmp_node, tmp_entry, node) {
 		if (!strcmp(tmp_entry->target_pathname, info.target_pathname)) {
 			hash_del(&tmp_entry->node);
@@ -1083,7 +1089,7 @@ int susfs_add_open_redirect(struct st_susfs_open_redirect* __user user_info) {
 			break;
 		}
 	}
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_open_redirect);
 
 	new_entry = kmalloc(sizeof(struct st_susfs_open_redirect_hlist), GFP_KERNEL);
 	if (!new_entry) {
@@ -1100,7 +1106,7 @@ int susfs_add_open_redirect(struct st_susfs_open_redirect* __user user_info) {
 		return 1;
 	}
 
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_open_redirect);
 	hash_add(OPEN_REDIRECT_HLIST, &new_entry->node, info.target_ino);
 	if (update_hlist) {
 		SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s', redirected_pathname: '%s', is successfully updated to OPEN_REDIRECT_HLIST\n",
@@ -1109,7 +1115,7 @@ int susfs_add_open_redirect(struct st_susfs_open_redirect* __user user_info) {
 		SUSFS_LOGI("target_ino: '%lu', target_pathname: '%s' redirected_pathname: '%s', is successfully added to OPEN_REDIRECT_HLIST\n",
 				new_entry->target_ino, new_entry->target_pathname, new_entry->redirected_pathname);
 	}
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_open_redirect);
 	return 0;
 }
 
@@ -1316,18 +1322,18 @@ out_kfree_kbuf:
 }
 
 /* susfs avc log spoofing */
+static DEFINE_SPINLOCK(susfs_spin_lock_set_avc_log_spoofing);
+
 void susfs_set_avc_log_spoofing(bool enabled) {
-	spin_lock(&susfs_spin_lock);
+	spin_lock(&susfs_spin_lock_set_avc_log_spoofing);
 	susfs_is_avc_log_spoofing_enabled = enabled;
-	spin_unlock(&susfs_spin_lock);
+	spin_unlock(&susfs_spin_lock_set_avc_log_spoofing);
 	SUSFS_LOGI("enabled: %d\n", enabled);
 }
 
 /* susfs_init */
 void susfs_init(void) {
-	spin_lock_init(&susfs_spin_lock);
 #ifdef CONFIG_KSU_SUSFS_SPOOF_UNAME
-	spin_lock_init(&susfs_uname_spin_lock);
 	susfs_my_uname_init();
 #endif
 	SUSFS_LOGI("susfs is initialized! version: " SUSFS_VERSION " \n");
